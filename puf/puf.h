@@ -1,0 +1,1 @@
+void puf(int K_bits, int PE, unsigned char* out);

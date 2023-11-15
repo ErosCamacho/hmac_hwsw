@@ -1,0 +1,1 @@
+﻿void xor (unsigned char* out, unsigned char* in1, unsigned char* in2, int size);
