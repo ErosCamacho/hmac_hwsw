@@ -16,7 +16,7 @@ void load_bitstream(int DBG) {
 	else				sprintf(bitstream_file, "%s", "BD_wrapper_64.bit");
 	*/
 
-	sprintf(bitstream_file, "%s", "RoT.bit");
+	sprintf(bitstream_file, "%s", "RoT/RoT.bit");
 
 	FILE* file;
 

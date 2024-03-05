@@ -5,7 +5,7 @@ void puf(int K_bits, int PE, unsigned char* out) {
 
 	MMIO_WINDOW puf;
 
-	int N_CMPS = 4096;      //    Number of comparisons
+	int N_CMPS = 2048;      //    Number of comparisons
 	int E_CMPS = 0;       //    Number of discarded comparisons
 	//int PE = 1;        //    PUF/Entropy Source (in IP Operation mode)
 	int SD = 1;        // -s Same/different LUTs
@@ -61,6 +61,7 @@ void puf(int K_bits, int PE, unsigned char* out) {
 	// Reset Challenges Mask
 	op = 0;
 	writeMMIO(&puf, &op, CHLADDC, sizeof(op));
+
 	for (int c = 0; c < ceil(N_CMPS / (Dbw / 4.)) * 16; c++) {
 		puf_selm[c] = 0;
 		puf_ref[c] = 0;
@@ -78,10 +79,12 @@ void puf(int K_bits, int PE, unsigned char* out) {
 		}
 	}
 
-	chl_btor(puf_selm, N_CMPS, puf_selr);
+	
 
 	// Perform the enrollment process
 	PUF_enrollment(&puf, 0, 0, CONFIG, E_tests, N_CMPS, E_CMPS, puf_ref, puf_selm);
+	
+	chl_btor(puf_selm, N_CMPS, puf_selr);
 
 	// Write Challenges Selection Mask
 	PUF_writeChallegesMask(&puf, puf_selr, ceil(MN_CMPS / 32.), 0);
@@ -93,6 +96,7 @@ void puf(int K_bits, int PE, unsigned char* out) {
 
 	//Read PUF results
 	PUF_readOutput(&puf, N_CMPS - E_CMPS, puf_output, 0);
+
 
 	// Get PUF comparisons      
 	puf_rtoc(puf_output, N_regs, puf_outc);
@@ -113,7 +117,5 @@ void puf(int K_bits, int PE, unsigned char* out) {
 				puf_outecc[8 * i + 5] << 2 |
 				puf_outecc[8 * i + 6] << 1 |
 				puf_outecc[8 * i + 7];
-
-
 
 }

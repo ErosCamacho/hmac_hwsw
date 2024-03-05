@@ -3,16 +3,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include "pynq_api.h"
-#include "common/Funcion_Test.h"
-#include "common/xor.h"
-#include "sha2/sha2_hw.h"
-#include "sha2/sha2_sw.h"
-#include "sha3/sha3_hw.h"
-#include "sha3/sha3_sw.h"
-#include "config.h"
+#include "RoT/common/Funcion_Test.h"
+#include "RoT/common/xor.h"
+#include "RoT/sha2/sha2_hw.h"
+#include "RoT/sha2/sha2_sw.h"
+#include "RoT/sha3/sha3_hw.h"
+#include "RoT/sha3/sha3_sw.h"
+#include "RoT/config.h"
 
 
-void hmac_hw(PYNQ_MMIO_WINDOW ms2xl, unsigned char* key, unsigned char* msg, unsigned char* hmac_final, int mode, int verb) {
+void hmac_hw(PYNQ_MMIO_WINDOW ms2xl, unsigned char* key, unsigned char* msg, unsigned char* hmac_final, int mode, int sel_puf, int verb) {
 
 	int DBG = 0;
 
@@ -79,7 +79,9 @@ void hmac_hw(PYNQ_MMIO_WINDOW ms2xl, unsigned char* key, unsigned char* msg, uns
 	unsigned long long length_key_bit;
 	unsigned long long length_msg_bit;
 
-	length_key = (unsigned long long)strlen(key) / 2;
+	if (sel_puf) length_key = (unsigned long long)strlen(key);
+	else length_key = (unsigned long long)strlen(key) / 2;
+
 	length_msg = (unsigned long long)strlen(msg) / 2;
 	length_key_bit = 8 * length_key;
 	length_msg_bit = 8 * length_msg;
@@ -87,12 +89,19 @@ void hmac_hw(PYNQ_MMIO_WINDOW ms2xl, unsigned char* key, unsigned char* msg, uns
 	/* Key & Data Hex */
 	int ind1, ind2;
 	char character;
-	for (int i = 0; i < length_key; i++) {
-		ind1 = 2 * i;
-		ind2 = ind1 + 1;
-		char_to_hex(key[ind1], key[ind2], &character);
-		key_hex[i] = character;
+	if (sel_puf) {
+		memcpy(key_hex, key, sizeof(unsigned char) * length_key);
 	}
+	else {
+		for (int i = 0; i < length_key; i++) {
+			ind1 = 2 * i;
+			ind2 = ind1 + 1;
+			char_to_hex(key[ind1], key[ind2], &character);
+			key_hex[i] = character;
+		}
+	}
+
+
 	for (int i = 0; i < length_msg; i++) {
 		ind1 = 2 * i;
 		ind2 = ind1 + 1;
@@ -172,7 +181,7 @@ void hmac_hw(PYNQ_MMIO_WINDOW ms2xl, unsigned char* key, unsigned char* msg, uns
 }
 
 
-void hmac_sw(unsigned char* key, unsigned char* msg, unsigned char* hmac_final, int mode, int verb) {
+void hmac_sw(unsigned char* key, unsigned char* msg, unsigned char* hmac_final, int mode, int sel_puf, int verb) {
 
 	int DBG = 0;
 
@@ -240,7 +249,9 @@ void hmac_sw(unsigned char* key, unsigned char* msg, unsigned char* hmac_final, 
 	unsigned long long length_key_bit;
 	unsigned long long length_msg_bit;
 
-	length_key = (unsigned long long)strlen(key) / 2;
+	if (sel_puf) length_key = (unsigned long long)strlen(key);
+	else length_key = (unsigned long long)strlen(key) / 2;
+
 	length_msg = (unsigned long long)strlen(msg) / 2;
 	length_key_bit = 8 * length_key;
 	length_msg_bit = 8 * length_msg;
@@ -248,12 +259,18 @@ void hmac_sw(unsigned char* key, unsigned char* msg, unsigned char* hmac_final, 
 	/* Key & Data Hex */
 	int ind1, ind2;
 	char character;
-	for (int i = 0; i < length_key; i++) {
-		ind1 = 2 * i;
-		ind2 = ind1 + 1;
-		char_to_hex(key[ind1], key[ind2], &character);
-		key_hex[i] = character;
+	if (sel_puf) {
+		memcpy(key_hex, key, sizeof(unsigned char) * length_key);
 	}
+	else {
+		for (int i = 0; i < length_key; i++) {
+			ind1 = 2 * i;
+			ind2 = ind1 + 1;
+			char_to_hex(key[ind1], key[ind2], &character);
+			key_hex[i] = character;
+		}
+	}
+
 	for (int i = 0; i < length_msg; i++) {
 		ind1 = 2 * i;
 		ind2 = ind1 + 1;

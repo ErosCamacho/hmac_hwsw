@@ -3,14 +3,15 @@
 #include <stdlib.h>
 #include <math.h>
 #include "pynq_api.h"
-#include "common/Funciones_HW.h"
-#include "sha2/sha2_hw.h"
-#include "sha2/sha2_sw.h"
-#include "sha3/sha3_hw.h"
-#include "sha3/sha3_sw.h"
-#include "config.h"
+#include "RoT/common/Funciones_HW.h"
+#include "RoT/common/Funcion_Test.h"
+#include "RoT/sha2/sha2_hw.h"
+#include "RoT/sha2/sha2_sw.h"
+#include "RoT/sha3/sha3_hw.h"
+#include "RoT/sha3/sha3_sw.h"
+#include "RoT/config.h"
 #include "HMAC.h"
-#include "puf/puf.h"
+#include "RoT/puf/puf.h"
 
 int main(int argc, char** argv) {
 	
@@ -33,17 +34,20 @@ int main(int argc, char** argv) {
 	int sel_puf	= 0;
 	int mode_puf = 1;
 	int mode = 1;
+	int verb = 0;
 
 	for (int arg = 1; arg < argc; arg++) {
 		if (argv[arg][0] == '-') {
 			if (argv[arg][1] == 'h') {
-				printf("\n Usage: HMAC [ [-h] | [-s] [-m] [-k] [-p/t] [-n]]\n");
+				printf("\n Usage: HMAC [ [-h] | [-s] [-m] [-k] [-p/t] [-n] [-v]]\n");
 				printf("\n  -h:		Show the help.");
 				printf("\n  -s:		1. SHA-256  --- 2. SHA-512 --- 3. SHA3-256 --- 4. SHA3-512 ");
 				printf("\n  -m:		Input message (HEX format).");
 				printf("\n  -k:		Input key (HEX format).");
-				printf("\n  -p/t:	Generate a key using PUF(p) / TRNG(t) response");
+				printf("\n  -p/t:	        Generate a key using PUF(p) / TRNG(t) response");
 				printf("\n  -n:		Number of bits of the generated key (max: 512)");
+				printf("\n  -v:		Verbose level.");
+				printf("\n \n Online check: https://www.liavaag.org/English/SHA-Generator/HMAC/");
 				printf("\n \n");
 				return 1;
 			}
@@ -64,6 +68,9 @@ int main(int argc, char** argv) {
 			}
 			else if (argv[arg][1] == 'n') {
 				k_bits = atoi(argv[arg + 1]);
+			}
+			else if (argv[arg][1] == 'v') {
+				verb = atoi(argv[arg + 1]);
 			}
 			else {
 				printf("\n unknown option: %s\n\n", argv[arg]);
@@ -86,16 +93,15 @@ int main(int argc, char** argv) {
 	if (sel_puf) {
 		puf(k_bits, mode_puf, out_puf);
 
-		printf("\n");
-		for (int i = 0; i < (k_bits / 8); i++) sprintf(key, "%s%d", key, out_puf[i]);
+		memcpy(key, out_puf, sizeof(unsigned char) * (k_bits / 8));
 
-		printf("\n key (l=%d): \n", k_bits);
-		show_array(out_puf, (k_bits / 8), 32);
+		printf("\n\n key (l=%d): \n", k_bits);
+		show_array(key, (k_bits / 8), 32);
 
 	}
 
 	time_hw = PYNQ_Wtime();
-	hmac_hw(ms2xl, key, msg, hmac_out, mode, 0);
+	hmac_hw(ms2xl, key, msg, hmac_out, mode, sel_puf, verb);
 	time_hw = PYNQ_Wtime() - time_hw; 
 	
 	printf("\n hmac_hw: \n");
@@ -105,7 +111,7 @@ int main(int argc, char** argv) {
 	if (mode == 4) show_array(hmac_out, (512 / 8), 32);
 
 	time_sw = PYNQ_Wtime();
-	hmac_sw(key, msg, hmac_out, mode, 0);
+	hmac_sw(key, msg, hmac_out, mode, sel_puf, verb);
 	time_sw = PYNQ_Wtime() - time_sw;
 
 	printf("\n hmac_sw: \n");
