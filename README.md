@@ -14,9 +14,9 @@ The main idea of this repository is:
 ## Table of Contents
   <ol>
     <li><a href="#dir-struc">Directory structure</a></li>
-    <li><a href="#ip-integ">IP Integration</a></li>
+    <li><a href="#hmac-ope">HMAC operation</a></li>
+	<li><a href="#rot-integ">RoT Integration</a></li>
     <li><a href="#pre-pynqz2">Prerequisites for the Pynq-Z2 platform</a></li>
-    <li><a href="#ins-test">Installation and Use of the Test</a></li>
 	<li><a href="#ins-demo">Installation and Use of the Demo</a></li>
 	<li><a href="#example">Example of the Demo</a></li>
     <li><a href="#note">Note for version</a></li>
@@ -40,7 +40,7 @@ The main idea of this repository is:
 - README.md: this file 
 . Makefile: to compile the demo
 
-## HMAC operation <a name="dir-struc"></a>
+## HMAC operation <a name="hmac-ope"></a>
 
 There are many variants of HMAC, which are HMAC-SHA1, HMAC-SHA2, HMAC-MD5, that corresponds to the use of SHA-1, SHA2, and Message-Digest 5 (MD5) hash functions. 
 Since there are many collisions attacks on SHA-1 and MD5 reported in the literature, they have been discarded to be used in this RoT. 
@@ -74,35 +74,38 @@ where
 - $opad$ is the block-sized outer padding, consisting of repeated bytes valued $0x5c$.
 - $ipad$ is the block-sized inner padding, consisting of repeated bytes valued $0x36$. 
 
-## IP Integration <a name="ip-integ"></a>
+## RoT Integration <a name="rot-integ"></a>
 
-The IP module is delivered in the ```ntru_ms2xs_8.0``` folder. The design of the core part of the IP module is depicted in the next figure. The arithmetic unit (AU) is shown 
-in the green box. The three different operation modes are ruled by the coefficients of the blind polynomial: -1,1 and 0. The parameter ```M``` is depicted as paralellization 
-coefficient that means the number of AUs are working in parallel. 
+The RoT is based on several building blocks that are part of many cryptographic algorithms and protocols, 
+to that end, they are fundamental elements that can be used in various scenarios. Those building blocks are: 
 
-![](images/schematic_NTRU.jpg)
+    - **PUF/TRNG**: The significance of PUFs and TRNGs in cryptography necessitates their inclusion in the RoT. 
+    - **Hash Function**: The RoT incorporates widely used hash functions in cryptographic implementations. These include SHA-2 based functions (SHA-256 and SHA-512) and SHA-3 based functions (SHA3-256 and SHA3-512).
+    - **Polynomial Multiplier**: The inclusion of this module has resulted in a substantial performance enhancement in the domain of PQC, particularly within the NTRU algorithm.
 
-The IP integration is finished adding an user interface in which it is possible to modify the next parameters of the polynomial multiplier:
-- ```M```: is the number of AUs that are working in parallel.
-- ```N```: the number of the coefficients of the polynomial. See NTRU documentation.
-- ```Q```: is the number that symbolizes the modQ reduction in the polynomial ring. 
-- ```max_cycles```: is the number of maximum cycles it is possible to accelerate the algorithm avoind timing attacks. See PhD Dissertation.
+The schematic of the RoT building blocks integration is the next one:
 
-![](images/IP_integrator_ntru.png)
+![](images/HW_RoT.png)
 
-The next table shows all the implementations delivered in this repository. There are in total 8 different strategies: 4 parameters set in the NTRU where in each one the
-`max_cycles` value was set in `N` and `CL` (Confident Limit). From each configuration there are different values of `M`: `1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,32,64,128,256`.
-That is basically the content of the folder `NTRU_3Round.rar\bit\`. As a final user, you can discard (and remove) other implementations and remake the embedded integration using the 
-configuration more suitable for your interest. 
+The embedded integration is the next one:
 
-| Parameter set |  `N`  | `CL` |
-| :------------ | --- | --- |
-| `ntruhps2048509` | 509 | 400 |
-| `ntruhps2048677` | 677 | 516 |
-| `ntruhps2048821` | 821 | 625 |
-| `ntruhrss2048701` | 701 | 533 |
+![](images/BD.png)
 
-For further information, see Chapter 4 of the [PhD Dissertation](https://github.com/ErosCamacho/PhD_Dissertation/blob/main/PhD_Thesis_Eros_Camacho_Ruiz_vFinal_rev.pdf)
+And the resources occupancy is depicted in the next table:
+
+| Module | LUTs | FFs | BRAMs |
+| -------------------------- | ----- | ----- | --- |
+| Processor | 24 | 0 | 0 |
+| Interconnection | 4095 | 5688 | 2.5 |
+| SHA-256 | 1612 | 1196 | 0.5 |
+| SHA-512 | 3192 | 2097 | 1 |
+| SHA3-256 | 3859 | 3046 | 0 |
+| SHA3-512 | 3618 | 2532 | 0 |
+| NTRU Polynomial Multiplier | 359 | 130 | 4.5 |
+| PUF / TRNG | 367 | 390 | 0 |
+| **Total** | 17126 | 15079 | 8.5 |
+
+For further information, see Chapter 5 of the [PhD Dissertation](https://github.com/ErosCamacho/PhD_Dissertation/blob/main/PhD_Thesis_Eros_Camacho_Ruiz_vFinal_rev.pdf)
 
 ## Prerequisites for the Pynq-Z2 platform <a name="pre-pynqz2"></a>
 
@@ -110,109 +113,41 @@ For further information, see Chapter 4 of the [PhD Dissertation](https://github.
 
 2. Then, issue ```make```. Once it is built, issue ```sudo make install```. 
 
-## Installation and Use of the Test <a name="ins-test"></a>
-
-1. For compilation of a specific test:
-
-```bash
-make Test_N_VALUE
-```
-
-where `N_VALUE` can be: `509, 677, 821, 701`. So, for example if the user wants to compile something related with the parameter set `ntruhps2048509`, 
-they must issue: `make Test_509`
-
-2. For the use, the program has different input variables:
-	- `-h` : Show the help.
-	- `-hh` : Show the extended help.
-	- `-n` : Number of test to perform.
-	- `-M` : Paralelization coefficient. *Note: For that there must be a bitstream in the folder `N/CL/M`.
-	- `-y` : CL parameter.
-	
-	Also it includes options to debug different parts:
-	- `-d` : debug level
-	- `-c` : number of coefficients to show in the debug. *In order to avoid a data massification on the screen.* 
-		- `0`: Minimize the print in window.
-		- `1`: Show the time in each part of the algorithm.
-		- `2`: Show the extended evaluation of time.
-		- `3`: Show the coefficients of SW and HW.
-		- `4`: Show the multiplication operation in SW.
-		- `5`: Show the multiplication operation in HW.
-		- `6`: Show the public key.
-		- `7`: Show the seed and he coefficients of r and h.
-		- `8`: Show the multiplication operation in SW 3 ROUND.
-		- `9`: Show the cuphertext of 3 ROUND, LIBNTRU, HW.
-		- `10`: Show the hash of rm.
-		- `11`: ***ONLY FOR PERFORMING THE SEED ANALYSIS.*** It generates the file `r.txt` .
-
-An example, if it is desired to performance 1000 tests on the `ntruhps2048509` parameter set, using a confident limit of 400 with a parallelization coefficient of 10, 
-it has to be typed: `Test_509 -n 1000 -M 10 -y 400`
-
-***To run the tests, it is necessary to set the root privileges***
-
 ## Installation and Use of the Demo <a name="ins-demo"></a>
 
-The main idea of the Demo is to interconnect two devices and share information using PQC as the next figure shows. In this case, two Pynq platforms are interconnected 
-in a local network. The two of them are going to generate the key pair (public and private keys). Then, one of them is going to recive the public key of the other one using 
-this key to encapsulate a shared secret. Then the ciphertext generated (with the information of the shared secret) is sent to the other platform that will use the 
-private key to decapsulate and extract the shared secret. 
+The main idea of the Demo is to verify some message. The message should be given by prompt screen and in hex format. 
+The key of this HMAC can be generated using the PUF (in this case the ID is working as key), 
+using the TRNG (the key will be different in each generation) or
+using the propmt to input a certain key in hex format
 
-![](images/demo_ntru.jpg)
-
-1. For compilation of a specific demo:
+1. For compilation:
 
 ```bash
-make Demo_N_VALUE
+make HMAC
 ```
-
-where `N_VALUE` can be: `509, 677, 821, 701`. So, for example if the user wants to compile something related with the parameter set `ntruhps2048509`, 
-they must issue: `make Demo_509`
 
 2. For the use, the program has different input variables:
 	- `-h` : Show the help.
-	- `-k` : Key generation.
-	- `-e` : Encapsulation. 
-	- `-d` : Decapsulation.
+	- `-s` : Different version of the hash function: 1. SHA-256  --- 2. SHA-512 --- 3. SHA3-256 --- 4. SHA3-512.
+	- `-m` : Input message (HEX format). 
+	- `-p/t` : Generate a key using PUF(p) / TRNG(t) response.
+	- `-n` : Number of bits of the generated key (max: 512)
 	
 	Also it includes verbose options:
-	- `-v` : verbose level level
-		- `1`: Show only functions.
-		- `2`: Show intermediate results.
-		- `3`: Show keys.
+	- `-v` : verbose level in which it is possible to check intermediate results. 
 
 ## Example of the Demo <a name="example"></a>
 
-A demo video example can be seen in the next [link](https://saco.csic.es/index.php/s/Ze9GETKY7zzMJ23). 
+For the example, it is going to be generated the HMAC (SHA3-512) of the message (0x123456) with a key of 512 bits generated by the TRNG.
 
-For the example, two platforms will be used: #PLATFORM_1 and #PLATFORM_2. *It is recommended that the verbose level be 3 in order to see all the intermediate results.*
-
-1. The first step is to perform the key generation in both platforms:
+For that, we should type:
 ```bash
-Demo_509 -k -v 3
+./HMAC -s 4 -m 123456 -t -n 512
 ```
 
-2. The next step is to send the public key of the #PLATFORM_1 to the #PLATFORM_2:
-```bash
-send_pk.sh
-```
-*Note: the configuration set in `send_pk.sh` can be modified to the final user. It has been set to my personal set-up.*
+The next image shows the result of the execution. As you can see both, SW and HW HMAC, return the same value.
 
-3. The next step is to encapsulate the shared secret using the public key in the #PLATFORM_2.
-```bash
-Demo_509 -e -v 3
-```
-
-4. The next step is to send the ciphertext generated in the below step back to the #PLATFORM_1:
-```bash
-send_ct.sh
-```
-*Note: the configuration set in `send_ct.sh` can be modified to the final user. It has been set to my personal set-up.*
-
-5. The next step is to recover the shared secret in the #PLATFORM_1 decapsulating:
-```bash
-Demo_509 -d -v 3
-```
-
-At the end, it will check that both platforms share the same secrets.
+![](images/exec.png)
 
 ***To run the demo, it is necessary to set the root privileges***
 
