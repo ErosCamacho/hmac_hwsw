@@ -54,14 +54,15 @@ HMAC(K, m) = H\Bigl(\bigl(K' \oplus opad\bigr) \parallel
 H \bigl(\left(K' \oplus ipad\right) \parallel m\bigr)\Bigr) 
 ```
 
-    \\
-    K' &= 
+where
+
+```math
+K' = 
     \begin{cases}
-    \operatorname{H}\left(K\right) & \text{if}\ K\text{ is larger than block size} \\
+    H\left(K\right) & \text{if}\ K\text{ is larger than block size} \\
     K                              & \text{otherwise}
     \end{cases}
-    \label{eq:hmac_2}
-    \end{align}
+```
 
     where
     \begin{itemize}
