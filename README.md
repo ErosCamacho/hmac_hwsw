@@ -64,17 +64,15 @@ K' =
     \end{cases}
 ```
 
-    where
-    \begin{itemize}
-        \item $\operatorname{H}$ is the SHA-2 (256) cryptographic hash function.
-        \item $m$ is the message to be authenticated.
-        \item $K$ is the secret key.
-        \item $K'$ is a block-sized key derived from the secret key, $K$; either by padding to the right with 0s up to the block size, or by hashing down to less than or equal to the block size first and then padding to the right with zeros.
-        \item $\parallel$ denotes concatenation.
-        \item $\oplus$ denotes bitwise exclusive or (XOR).
-        \item $opad$ is the block-sized outer padding, consisting of repeated bytes valued $0x5c$.
-        \item $ipad$ is the block-sized inner padding, consisting of repeated bytes valued $0x36$. 
-    \end{itemize}
+where
+- $H$ is the cryptographic hash function.
+- $m$ is the message to be authenticated.
+- $K$ is the secret key.
+- $K'$ is a block-sized key derived from the secret key, $K$; either by padding to the right with 0s up to the block size, or by hashing down to less than or equal to the block size first and then padding to the right with zeros.
+- $\parallel$ denotes concatenation.
+- $\oplus$ denotes bitwise exclusive or (XOR).
+- $opad$ is the block-sized outer padding, consisting of repeated bytes valued $0x5c$.
+- $ipad$ is the block-sized inner padding, consisting of repeated bytes valued $0x36$. 
 
 ## IP Integration <a name="ip-integ"></a>
 
