@@ -48,10 +48,11 @@ For that, the hash functions selected have been SHA-2 and SHA-3 to perform the H
 Although SHA-3 is not recognized in FIPS 198-1 as hash function to use in HMAC, NIST expects to include it in the standard NIST SP 800-224 in the future. 
 
 For the better understanding of the proposed implementation, the mathematical expression of the HMAC taken from FIPS 198-1 is provided:
-    \begin{align}
+    $$
     \operatorname{HMAC}(K, m) &= \operatorname{H}\Bigl(\bigl(K' \oplus opad\bigr) \parallel 
     \operatorname{H} \bigl(\left(K' \oplus ipad\right) \parallel m\bigr)\Bigr) 
-    \label{eq:hmac_1}
+    $$
+
     \\
     K' &= 
     \begin{cases}
