@@ -1,12 +1,12 @@
-# NTRU 3Round
+# HMAC: PoC
 
-2024-02-28 - Eros Camacho-Ruiz (camacho@imse-cnm.csic.es)
+2024-03-06 - Eros Camacho-Ruiz (camacho@imse-cnm.csic.es)
 
-This is the repository of the evaluation carried out in the NTRU cryptosystem presented in the [PhD Dissertation](https://github.com/ErosCamacho/PhD_Dissertation/blob/main/PhD_Thesis_Eros_Camacho_Ruiz_vFinal_rev.pdf) entitled: <b>"Design of a hardware Root-of-Trust on embedded systems"</b>
+This is the repository of the one of the Proof-of-Concepts presented in the [PhD Dissertation](https://github.com/ErosCamacho/PhD_Dissertation/blob/main/PhD_Thesis_Eros_Camacho_Ruiz_vFinal_rev.pdf) entitled: <b>"Design of a hardware Root-of-Trust on embedded systems"</b>
 
-The main idea of this repository is twofold:
-- Study the countermeasures proposed in the PhD with different implementations.
-- Define a demo in which it is possible to stablish a PQ secure communication between two devices
+The main idea of this repository is:
+- The use of a HW RoT proposed in dissertation with the combination of several modules. 
+- Define a demo in which it is possible to provide a message verification through HMAC (FIPS 198-1)
 
 *Note: All the content of this repository has been implemented using the Pynq Framework.*
 
@@ -26,21 +26,52 @@ The main idea of this repository is twofold:
 
 ## Directory structure <a name="dir-struc"></a>
 
-- ntru_ms2xs_8.0: the IP module of the NTRU polynomial multiplier
-- ntru_3round.tar.gz: the comprised file of the NTRU software implementation and the HW call drivers
-    - result_test: this folder is generated to store the performance test of the NTRU.
-    - bit: stores all the embedded system integrator as bitstream to check on the tests. (see the Table below)
-    - data_in: stores the input ciphertext in binary format when the demo is running.
-    - data_out: stores the output ciphertext in binary format when the demo is running.
-    - gen_keys: stores the generated keys.
-    - pub_keys: stores the public keys of the devices to connect.
-    - ntru: source files
-        - common: Low-level drivers and utilities
-        - src: NTRU 3Round SW libraries	
-    - Makefile: to generate the executables for the library
-    - Test.c: main file to tests
-    - demo.c: main file to demo
+- RoT: the folder that contains the RoT developed in the dissertation
+	- puf: it contains all the files related with the puf/trng.
+	- sha2: files related with sha-2 hw and sw implementations.
+	- sha3: files related with sha-3 hw and sw implementations.
+	- common: drivers and other funtions of the RoT.
+	- RoT.bit: the bitstream of the RoT.
+	- RoT.h: the headers of the funtions of the RoT.
+	- config.h: the configure file. 
+- HMAC.c: it contains the HMAC functions.
+- HMAC.h: the headers of the HMAC functions. 
+- demo.c: main file to demo
 - README.md: this file 
+. Makefile: to compile the demo
+
+## HMAC operation <a name="dir-struc"></a>
+
+There are many variants of HMAC, which are HMAC-SHA1, HMAC-SHA2, HMAC-MD5, that corresponds to the use of SHA-1, SHA2, and Message-Digest 5 (MD5) hash functions. 
+Since there are many collisions attacks on SHA-1 and MD5 reported in the literature, they have been discarded to be used in this RoT. 
+For that, the hash functions selected have been SHA-2 and SHA-3 to perform the HMAC function. 
+Although SHA-3 is not recognized in FIPS 198-1 as hash function to use in HMAC, NIST expects to include it in the standard NIST SP 800-224 in the future. 
+
+For the better understanding of the proposed implementation, the mathematical expression of the HMAC taken from FIPS 198-1 is provided:
+    \begin{align}
+    \operatorname{HMAC}(K, m) &= \operatorname{H}\Bigl(\bigl(K' \oplus opad\bigr) \parallel 
+    \operatorname{H} \bigl(\left(K' \oplus ipad\right) \parallel m\bigr)\Bigr) 
+    \label{eq:hmac_1}
+    \\
+    K' &= 
+    \begin{cases}
+    \operatorname{H}\left(K\right) & \text{if}\ K\text{ is larger than block size} \\
+    K                              & \text{otherwise}
+    \end{cases}
+    \label{eq:hmac_2}
+    \end{align}
+
+    where
+    \begin{itemize}
+        \item $\operatorname{H}$ is the SHA-2 (256) cryptographic hash function.
+        \item $m$ is the message to be authenticated.
+        \item $K$ is the secret key.
+        \item $K'$ is a block-sized key derived from the secret key, $K$; either by padding to the right with 0s up to the block size, or by hashing down to less than or equal to the block size first and then padding to the right with zeros.
+        \item $\parallel$ denotes concatenation.
+        \item $\oplus$ denotes bitwise exclusive or (XOR).
+        \item $opad$ is the block-sized outer padding, consisting of repeated bytes valued $0x5c$.
+        \item $ipad$ is the block-sized inner padding, consisting of repeated bytes valued $0x36$. 
+    \end{itemize}
 
 ## IP Integration <a name="ip-integ"></a>
 
